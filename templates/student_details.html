@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Details - Classroom Wordle</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <nav class="nav-bar">
+            <a href="{{ url_for('teacher') }}" class="nav-link">← Back to Teacher Panel</a>
+        </nav>
+
+        <h1>📊 Student Details</h1>
+
+        <div class="student-detail-panel">
+            <div class="student-info">
+                <h2>{{ student.name or 'Anonymous Student' }}</h2>
+                <p><strong>Username:</strong> {{ student.username }}</p>
+                <div class="password-management">
+                    <p><strong>Password:</strong>
+                        <input value="[Hidden]" readonly id="studentPassword" class="student-password-field">
+                        <button onclick="toggleStudentPassword()" class="toggle-btn" id="toggleBtn">👁️</button>
+                        <button onclick="editStudentPassword()" class="edit-btn">✏️ Edit</button>
+                    </p>
+                </div>
+
+                <div class="detailed-stats-grid">
+            <div class="detailed-stat-card">
+                <div class="detailed-stat-number">{{ stats.total_time_played }}</div>
+                <div class="detailed-stat-label">Total Games</div>
+            </div>
+            <div class="detailed-stat-card">
+                <div class="detailed-stat-number">{{ stats.custom_wins + stats.infinite_wins + stats.daily_wins }}</div>
+                <div class="detailed-stat-label">Total Wins</div>
+            </div>
+            <div class="detailed-stat-card">
+                <div class="detailed-stat-number">{{ "%.1f"|format((stats.custom_wins + stats.infinite_wins + stats.daily_wins) / (stats.total_time_played or 1) * 100) }}%</div>
+                <div class="detailed-stat-label">Overall Win Rate</div>
+            </div>
+            <div class="detailed-stat-card">
+                <div class="detailed-stat-number">{{ stats.fastest_solve or 'N/A' }}</div>
+                <div class="detailed-stat-label">Fastest Solve</div>
+            </div>
+            <div class="detailed-stat-card">
+                <div class="detailed-stat-number">{{ stats.perfect_games }}</div>
+                <div class="detailed-stat-label">Perfect Games</div>
+            </div>
+        </div>
+
+        <div class="game-type-breakdown">
+            <div class="breakdown-card">
+                <h4>🏫 Class Wordle</h4>
+                <div class="breakdown-stats">
+                    <div class="stat-item">
+                        <span class="stat-number">{{ stats.custom_games }}</span>
+                        <span class="stat-label">Games</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">{{ stats.custom_wins }}</span>
+                        <span class="stat-label">Wins</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">{{ stats.custom_win_rate }}%</span>
+                        <span class="stat-label">Win Rate</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">{{ stats.current_custom_streak }}</span>
+                        <span class="stat-label">Streak</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="breakdown-card">
+                <h4>📅 Daily Wordle</h4>
+                <div class="breakdown-stats">
+                    <div class="stat-item">
+                        <span class="stat-number">{{ stats.daily_games }}</span>
+                        <span class="stat-label">Games</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">{{ stats.daily_wins }}</span>
+                        <span class="stat-label">Wins</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">{{ stats.daily_win_rate }}%</span>
+                        <span class="stat-label">Win Rate</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">{{ stats.current_daily_streak }}</span>
+                        <span class="stat-label">Streak</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="breakdown-card">
+                <h4>🔄 Infinite Wordle</h4>
+                <div class="breakdown-stats">
+                    <div class="stat-item">
+                        <span class="stat-number">{{ stats.infinite_games }}</span>
+                        <span class="stat-label">Games</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">{{ stats.infinite_wins }}</span>
+                        <span class="stat-label">Wins</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">{{ stats.infinite_win_rate }}%</span>
+                        <span class="stat-label">Win Rate</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">{{ stats.current_infinite_streak }}</span>
+                        <span class="stat-label">Streak</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="recent-activity">
+            <h3>📈 Recent Activity</h3>
+            {% if recent_games %}
+            {% for item in recent_games %}
+            <div class="activity-item">
+                <div class="activity-game">
+                    <span class="game-type-tag {{ item.type.lower() }}">{{ item.type }}</span>
+                    <span>{{ item.game.target_word }}</span>
+                </div>
+                <div class="activity-result">
+                    {% if item.game.won %}
+                        <span style="color: #6aaa64;">✅ Won in {{ item.game.guess_count }}</span>
+                    {% else %}
+                        <span style="color: #f5793a;">❌ Lost</span>
+                    {% endif %}
+                    <span class="activity-time">{{ item.game.completed_at.strftime('%m/%d %H:%M') if item.game.completed_at else 'In Progress' }}</span>
+                </div>
+            </div>
+            {% endfor %}
+            {% else %}
+            <p style="color: #787c7e; text-align: center;">No recent activity</p>
+            {% endif %}
+        </div>
+            </div>
+
+            {% if games %}
+            <div class="current-game">
+                <h3>Recent Games</h3>
+                {% for game in games[:3] %}
+                <div class="game-summary">
+                    <p><strong>Word:</strong> {{ game.target_word }}</p>
+                    <p><strong>Status:</strong>
+                        {% if game.won %}
+                            ✅ Won in {{ game.guess_count }} guesses
+                        {% else %}
+                            ❌ Lost ({{ game.guess_count }}/6 guesses)
+                        {% endif %}
+                    </p>
+                    <p><strong>Date:</strong> {{ game.completed_at.strftime('%Y-%m-%d %H:%M') if game.completed_at else 'In Progress' }}</p>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            {% if games %}
+            <div class="game-history">
+                <h3>Game History</h3>
+                <div class="history-table">
+                    <div class="history-header">
+                        <span>Date</span>
+                        <span>Word</span>
+                        <span>Result</span>
+                        <span>Guesses</span>
+                    </div>
+                    {% for game in games %}
+                    <div class="history-row">
+                        <span>{{ game.completed_at.strftime('%m/%d/%Y') if game.completed_at else 'In Progress' }}</span>
+                        <span class="word">{{ game.target_word }}</span>
+                        <span class="result">{{ '✅ Won' if game.won else '❌ Lost' }}</span>
+                        <span>{{ game.guess_count }}/6</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <script>
+        let passwordVisible = false;
+        const studentId = {{ student.id }};
+
+        function toggleStudentPassword() {
+            const passwordField = document.getElementById('studentPassword');
+            const toggleBtn = document.getElementById('toggleBtn');
+
+            if (passwordVisible) {
+                passwordField.value = '[Hidden]';
+                toggleBtn.textContent = '👁️';
+                passwordVisible = false;
+            } else {
+                passwordField.value = '[Hashed - Cannot Display]';
+                toggleBtn.textContent = '🙈';
+                passwordVisible = true;
+            }
+        }
+
+        function editStudentPassword() {
+            const newPassword = prompt('Enter new password for {{ student.name }}:');
+            if (newPassword && newPassword.length >= 4) {
+                updatePassword(newPassword);
+            } else if (newPassword !== null) {
+                alert('Password must be at least 4 characters long');
+            }
+        }
+
+        function toggleStudentPassword() {
+            const passwordField = document.getElementById('studentPassword');
+            const toggleBtn = document.getElementById('toggleBtn');
+
+            if (passwordVisible) {
+                passwordField.value = '[Hidden]';
+                toggleBtn.textContent = '👁️';
+                passwordVisible = false;
+            } else {
+                loadStudentPassword();
+            }
+        }
+
+        async function loadStudentPassword() {
+            try {
+                const response = await fetch(`/teacher/get_student_password/${studentId}`);
+                const data = await response.json();
+
+                if (data.success) {
+                    const passwordField = document.getElementById('studentPassword');
+                    const toggleBtn = document.getElementById('toggleBtn');
+
+                    passwordField.value = data.password;
+                    toggleBtn.textContent = '🙈';
+                    passwordVisible = true;
+                } else {
+                    alert('Error loading password');
+                }
+            } catch (error) {
+                alert('Error loading password');
+            }
+        }
+
+        async function updatePassword(newPassword) {
+            try {
+                const response = await fetch('/teacher/update_student_password', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        student_id: studentId,
+                        new_password: newPassword
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    alert('Password updated successfully!');
+                } else {
+                    alert('Error updating password: ' + data.message);
+                }
+            } catch (error) {
+                alert('Error updating password');
+            }
+        }
+    </script>
+</body>
+</html>

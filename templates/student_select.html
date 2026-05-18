@@ -1,0 +1,63 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Select Game Mode - Classroom Wordle</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <nav class="nav-bar">
+            <a href="{{ url_for('home') }}" class="nav-link">← Back to Menu</a>
+            <span class="student-info">Welcome, {{ student.name }}!</span>
+            <a href="{{ url_for('student_logout') }}" class="nav-link">Logout</a>
+        </nav>
+
+        <h1>🎮 Choose Your Game Mode</h1>
+        <p>Select how you'd like to play Wordle today!</p>
+
+        <div class="game-mode-selection">
+            <div class="game-mode-card">
+                <div class="game-mode-icon">🏫</div>
+                <h3>Class Wordle</h3>
+                <p>Play the word set by your teacher. Compete with your classmates!</p>
+                <a href="{{ url_for('student_game') }}" class="game-mode-btn class-btn">Play Class Game</a>
+            </div>
+
+            <div class="game-mode-card">
+                <div class="game-mode-icon">📅</div>
+                <h3>Daily Wordle</h3>
+                <p>One puzzle per day. Same word for everyone!</p>
+                <a href="{{ url_for('daily_game') }}" class="game-mode-btn daily-btn">Play Daily Challenge</a>
+            </div>
+
+            <div class="game-mode-card">
+                <div class="game-mode-icon">🔄</div>
+                <h3>Infinite Wordle</h3>
+                <p>Unlimited random words. Practice makes perfect!</p>
+                <a href="{{ url_for('infinite_wordle') }}" class="game-mode-btn infinite-btn">Play Infinite Mode</a>
+            </div>
+        </div>
+
+        <div class="quick-stats">
+            <h3>🏆 Your Quick Stats</h3>
+            <div class="stats-grid">
+                <div class="quick-stat-item">
+                    <div class="quick-stat-number">{{ student.total_games }}</div>
+                    <div class="quick-stat-label">Total Games</div>
+                </div>
+                <div class="quick-stat-item">
+                    <div class="quick-stat-number">{{ student.total_wins }}</div>
+                    <div class="quick-stat-label">Total Wins</div>
+                </div>
+                <div class="quick-stat-item">
+                    <div class="quick-stat-number">{{ "%.1f"|format(student.total_wins / (student.total_games or 1) * 100) }}%</div>
+                    <div class="quick-stat-label">Win Rate</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

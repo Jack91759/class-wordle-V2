@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Search - Classroom Wordle</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        /* Basic responsive styling */
+        .container {
+            width: 95%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .search-panel {
+            margin-top: 20px;
+        }
+
+        .search-box {
+            display: flex;
+            margin-bottom: 10px;
+        }
+
+        .search-box input {
+            flex-grow: 1;
+            padding: 10px;
+        }
+
+        .search-filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .filter-group {
+            display: flex;
+            align-items: center;
+        }
+
+        .filter-group label {
+            margin-right: 5px;
+        }
+
+        .search-results {
+            margin-top: 20px;
+        }
+
+        .student-results {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .student-result-card {
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 8px;
+        }
+
+		.stats-buttons {
+			display: flex;
+			flex-direction: column;
+			gap: 5px;
+		}
+
+        /* Add more responsive styles as needed */
+        @media (max-width: 600px) {
+            .search-filters {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <nav class="nav-bar">
+            <a href="{{ url_for('home') }}" class="nav-link">← Back to Menu</a>
+        </nav>
+
+        <h1>🔍 Student Search</h1>
+        <p>Search for students to view their Wordle statistics</p>
+
+        <div class="search-panel">
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="Search by name or username..." autofocus>
+                <button onclick="searchStudents()" class="search-btn-small">Search</button>
+            </div>
+
+            <div class="search-filters">
+                <div class="filter-group">
+                    <label for="sortBy">Sort by:</label>
+                    <select id="sortBy" onchange="sortResults()">
+                        <option value="name">Name</option>
+                        <option value="win_rate">Win Rate</option>
+                        <option value="total_games">Total Games</option>
+                        <option value="custom_streak">Custom Streak</option>
+                        <option value="infinite_streak">Infinite Streak</option>
+                        <option value="daily_streak">Daily Streak</option>
+                        <option value="last_played">Last Played</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>
+                        <input type="checkbox" id="activeOnly" onchange="filterResults()">
+                        Active players only
+                    </label>
+                </div>
+                <div class="filter-group">
+                    <label>
+                        <input type="checkbox" id="minGames" onchange="filterResults()">
+                        Min 5 games played
+                    </label>
+                </div>
+            </div>
+
+            <div id="searchResults" class="search-results"></div>
+        </div>
+    </div>
+
+    <script>
+        let searchTimeout;
+        let allStudents = [];
+
+        document.getElementById('searchInput').addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(searchStudents, 300);
+        });
+
+        document.getElementById('searchInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                searchStudents();
+            }
+        });
+
+        async function searchStudents() {
+            const searchTerm = document.getElementById('searchInput').value.trim();
+            const resultsDiv = document.getElementById('searchResults');
+
+            if (searchTerm.length < 2) {
+                resultsDiv.innerHTML = '';
+                allStudents = [];
+                return;
+            }
+
+            try {
+                const response = await fetch('/search_students', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ search: searchTerm })
+                });
+
+                const data = await response.json();
+                allStudents = data.students;
+                applyFiltersAndSort();
+            } catch (error) {
+                console.error('Search error:', error);
+                resultsDiv.innerHTML = '<p class="error">Error searching students</p>';
+            }
+        }
+
+        function sortResults() {
+            applyFiltersAndSort();
+        }
+
+        function filterResults() {
+            applyFiltersAndSort();
+        }
+
+        function applyFiltersAndSort() {
+            let filteredStudents = [...allStudents];
+
+            // Apply filters
+            const activeOnly = document.getElementById('activeOnly').checked;
+            const minGames = document.getElementById('minGames').checked;
+
+            if (activeOnly) {
+                filteredStudents = filteredStudents.filter(s => s.recent_custom_games > 0 || s.recent_infinite_games > 0 || s.recent_daily_games > 0);
+            }
+
+            if (minGames) {
+                filteredStudents = filteredStudents.filter(s => s.total_games >= 5);
+            }
+
+            // Apply sorting
+            const sortBy = document.getElementById('sortBy').value;
+            filteredStudents.sort((a, b) => {
+                switch(sortBy) {
+                    case 'name':
+                        return a.name.localeCompare(b.name);
+                    case 'win_rate':
+                        return b.win_rate - a.win_rate;
+                    case 'total_games':
+                        return b.total_games - a.total_games;
+                    case 'custom_streak':
+                        return b.custom_streak - a.custom_streak;
+                    case 'infinite_streak':
+                        return b.infinite_streak - a.infinite_streak;
+                    case 'daily_streak':
+                        return b.daily_streak - a.daily_streak;
+                    case 'last_played':
+                        return new Date(b.last_played || 0) - new Date(a.last_played || 0);
+                    default:
+                        return 0;
+                }
+            });
+
+            displayResults(filteredStudents);
+        }
+
+        function displayResults(students) {
+            const resultsDiv = document.getElementById('searchResults');
+
+            if (students.length === 0) {
+                resultsDiv.innerHTML = '<p class="no-results">No students found</p>';
+                return;
+            }
+
+            let html = '<div class="student-results">';
+            students.forEach(student => {
+                const lastPlayed = student.last_played ? new Date(student.last_played).toLocaleDateString() : 'Never';
+                const isActive = student.recent_custom_games > 0 || student.recent_infinite_games > 0 || student.recent_daily_games > 0;
+
+                html += `
+                    <div class="student-result-card ${isActive ? 'active-player' : ''}">
+                        <div class="student-info">
+                            <div class="student-header">
+                                <h3>${student.name} ${isActive ? '🔥' : ''}</h3>
+                                <span class="activity-indicator ${isActive ? 'active' : 'inactive'}">
+                                    ${isActive ? 'Active' : 'Inactive'}
+                                </span>
+                            </div>
+                            <p class="username">@${student.username}</p>
+                            <div class="quick-stats">
+                                <span>Games: ${student.total_games}</span>
+                                <span>Wins: ${student.total_wins}</span>
+                                <span>Win Rate: ${student.win_rate}%</span>
+                                <span>Last Played: ${lastPlayed}</span>
+                            </div>
+                            <div class="streak-info">
+                                <div class="streak-item">
+                                    <span class="streak-icon">📚</span>
+                                    <span>Custom Streak: ${student.custom_streak}</span>
+                                    ${student.avg_guesses_custom > 0 ? `<span class="avg-guesses">(Avg: ${student.avg_guesses_custom})</span>` : ''}
+                                </div>
+                                <div class="streak-item">
+                                    <span class="streak-icon">🔄</span>
+                                    <span>Infinite Streak: ${student.infinite_streak}</span>
+                                    ${student.avg_guesses_infinite > 0 ? `<span class="avg-guesses">(Avg: ${student.avg_guesses_infinite})</span>` : ''}
+                                </div>
+                                <div class="streak-item">
+                                    <span class="streak-icon">📅</span>
+                                    <span>Daily Streak: ${student.daily_streak}</span>
+                                    ${student.avg_guesses_daily > 0 ? `<span class="avg-guesses">(Avg: ${student.avg_guesses_daily})</span>` : ''}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="stats-buttons">
+                            <a href="/student_stats/${student.id}/custom" class="stats-btn custom-stats">
+                                📚 Custom Wordle Stats
+                                <small>${student.recent_custom_games} recent games</small>
+                            </a>
+                            <a href="/student_stats/${student.id}/infinite" class="stats-btn infinite-stats">
+                                🔄 Infinite Wordle Stats
+                                <small>${student.recent_infinite_games} recent games</small>
+                            </a>
+                            <a href="/student_stats/${student.id}/daily" class="stats-btn daily-stats">
+                                📅 Daily Wordle Stats
+                                <small>${student.recent_daily_games} recent games</small>
+                            </a>
+                        </div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+
+            resultsDiv.innerHTML = html;
+        }
+    </script>
+</body>
+</html>

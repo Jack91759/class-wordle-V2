@@ -1,0 +1,114 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teacher - Classroom Wordle</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <nav class="nav-bar">
+            <a href="{{ url_for('home') }}" class="nav-link">← Back to Menu</a>
+        </nav>
+
+        <h1>👨‍🏫 Teacher Interface</h1>
+
+        <div class="teacher-panel">
+            <div class="word-setter">
+                <h3>Set Today's Word</h3>
+                <input type="text" id="wordInput" placeholder="Enter 5-letter word" maxlength="5">
+                <button onclick="setWord()" class="set-word-btn">Set Word</button>
+                <div id="message" class="message"></div>
+
+                {% if current_word %}
+                <div class="current-word">
+                    <strong>Current word: {{ current_word }}</strong>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="students-stats">
+                <h3>Student Statistics</h3>
+                {% if students %}
+                <div class="stats-table">
+                    <div class="stats-header">
+                        <span>Name</span>
+                        <span>Current Game</span>
+                        <span>Win Rate</span>
+                        <span>Total Games</span>
+                        <span>Actions</span>
+                    </div>
+                    {% for student in students %}
+                    <div class="stats-row">
+                        <span class="student-name">{{ student.name or 'Anonymous' }}</span>
+                        <span class="current-status">
+                            {% if student.game_over %}
+                                {% if student.won %}
+                                    ✅ Won ({{ student.current_guesses }}/6)
+                                {% else %}
+                                    ❌ Lost ({{ student.current_guesses }}/6)
+                                {% endif %}
+                            {% else %}
+                                🎮 Playing ({{ student.current_guesses }}/6)
+                            {% endif %}
+                        </span>
+                        <span class="win-rate">{{ student.win_rate }}%</span>
+                        <span class="total-games">{{ student.total_games }}</span>
+                        <span class="actions">
+                            <a href="{{ url_for('view_student_details', student_id=student.id) }}" class="view-details-btn">View Details</a>
+                        </span>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="no-students">No students have played yet.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="teacher-actions">
+            <a href="{{ url_for('password_management') }}" class="password-management-btn">🔐 Manage Passwords</a>
+            <a href="{{ url_for('teacher_logout') }}" class="logout-btn">Logout</a>
+        </div>
+    </div>
+
+    <script>
+        async function setWord() {
+            const word = document.getElementById('wordInput').value;
+            const messageDiv = document.getElementById('message');
+
+            try {
+                const response = await fetch('/set_word', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ word: word })
+                });
+
+                const data = await response.json();
+                messageDiv.textContent = data.message;
+                messageDiv.className = data.success ? 'message success' : 'message error';
+
+                if (data.success) {
+                    document.getElementById('wordInput').value = '';
+                    setTimeout(() => location.reload(), 1000);
+                }
+            } catch (error) {
+                messageDiv.textContent = 'Error setting word';
+                messageDiv.className = 'message error';
+            }
+        }
+
+        document.getElementById('wordInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                setWord();
+            }
+        });
+
+
+    </script>
+</body>
+</html>

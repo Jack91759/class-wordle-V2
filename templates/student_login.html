@@ -1,0 +1,74 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Login - Classroom Wordle</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <nav class="nav-bar">
+            <a href="{{ url_for('home') }}" class="nav-link">← Back to Menu</a>
+        </nav>
+
+        <h1>🎒 Student Login</h1>
+        <!-- <p>As of 6-4-25 all paswords have been reset to 1234. If you would like it changed please come talk to me.</p> -->
+
+        <div class="login-panel">
+            <div class="login-tabs">
+                <button class="tab-btn active" onclick="showTab('login')">Login</button>
+                <button class="tab-btn" onclick="showTab('register')">Register</button>
+            </div>
+
+            <!-- Login Form -->
+            <div id="login-form" class="tab-content active">
+                <form method="POST" action="{{ url_for('student_login') }}">
+                    <h3>Login to Your Account</h3>
+                    <input type="text" name="username" placeholder="Username" required>
+                    <input type="password" name="password" placeholder="Password" required>
+                    <button type="submit" class="login-btn">Login</button>
+                </form>
+            </div>
+
+            <!-- Register Form -->
+            <div id="register-form" class="tab-content">
+                <form method="POST" action="{{ url_for('student_register') }}">
+                    <h3>Create New Account</h3>
+                    <input type="text" name="name" placeholder="Your First and Last Name" required>
+                    <input type="text" name="username" placeholder="Choose Username" required>
+                    <input type="password" name="password" placeholder="Choose Password" required minlength="4">
+                    <button type="submit" class="login-btn">Register</button>
+                </form>
+            </div>
+
+            {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    <div class="flash-messages">
+                        {% for message in messages %}
+                            <div class="message error">{{ message }}</div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+        </div>
+    </div>
+
+    <script>
+        function showTab(tabName) {
+            // Hide all tab contents
+            const contents = document.querySelectorAll('.tab-content');
+            contents.forEach(content => content.classList.remove('active'));
+
+            // Remove active class from all tabs
+            const tabs = document.querySelectorAll('.tab-btn');
+            tabs.forEach(tab => tab.classList.remove('active'));
+
+            // Show selected tab content
+            document.getElementById(tabName + '-form').classList.add('active');
+            event.target.classList.add('active');
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,31 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teacher Login - Classroom Wordle</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <nav class="nav-bar">
+            <a href="{{ url_for('home') }}" class="nav-link">← Back to Menu</a>
+        </nav>
+
+        <h1>🔐 Teacher Login</h1>
+
+        <div class="login-panel">
+            <form method="POST" class="login-form">
+                <h3>Enter Teacher Password</h3>
+                <input type="password" name="password" placeholder="Password" required>
+                <button type="submit" class="login-btn">Login</button>
+
+                {% if error %}
+                <div class="message error">{{ error }}</div>
+                {% endif %}
+            </form>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Classroom Wordle</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>🎓 Classroom Wordle</h1>
+        <p>A word guessing game for the classroom!</p>
+
+        <div class="menu-buttons">
+            <a href="{{ url_for('teacher_login') }}" class="menu-btn teacher-btn">
+                👨‍🏫 Teacher Interface
+            </a>
+            <a href="{{ url_for('student_login') }}" class="menu-btn student-btn">
+                🎒 Student Game
+            </a>
+            <a href="{{ url_for('student_search') }}" class="menu-btn search-btn">
+                🔍 Student Search
+            </a>
+            <a href="{{ url_for('leaderboard') }}" class="menu-btn leaderboard-btn">
+                🏆 Leaderboard
+            </a>
+        </div>
+
+        <div class="instructions">
+            <h3>How to Play:</h3>
+            <ul>
+                <li>🎯 Teacher sets a 5-letter word</li>
+                <li>📝 Students have 6 attempts to guess it</li>
+                <li>🟩 Green = correct letter in right position</li>
+                <li>🟨 Yellow = correct letter in wrong position</li>
+                <li>⬜ Gray = letter not in word</li>
+            </ul>
+        </div>
+    <p>Made by Jacob Saranen on 6-2-25</p>
+    </div>
+</body>
+</html>

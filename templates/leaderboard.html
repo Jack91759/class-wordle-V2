@@ -1,0 +1,85 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leaderboard - Classroom Wordle</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <nav class="nav-bar">
+            <a href="{{ url_for('home') }}" class="nav-link">← Back to Menu</a>
+        </nav>
+
+        <h1>🏆 Leaderboard</h1>
+
+        <div class="leaderboard-sections">
+            <!-- Win Rate Leaderboard -->
+            <div class="leaderboard-section">
+                <h2>🎯 Best Win Rate</h2>
+                <p class="subtitle">(Minimum 5 games)</p>
+                <div class="leaderboard-table">
+                    <div class="leaderboard-header">
+                        <span>Rank</span>
+                        <span>Name</span>
+                        <span>Win Rate</span>
+                        <span>Games</span>
+                    </div>
+                    {% for student in students_by_winrate %}
+                    <div class="leaderboard-row">
+                        <span class="rank">{{ loop.index }}</span>
+                        <span class="name">{{ student.name }}</span>
+                        <span class="win-rate">{{ ((student.total_wins / student.total_games * 100) | round(1)) }}%</span>
+                        <span class="games">{{ student.total_games }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Total Wins Leaderboard -->
+            <div class="leaderboard-section">
+                <h2>🥇 Most Wins</h2>
+                <div class="leaderboard-table">
+                    <div class="leaderboard-header">
+                        <span>Rank</span>
+                        <span>Name</span>
+                        <span>Wins</span>
+                        <span>Games</span>
+                    </div>
+                    {% for student in students_by_wins %}
+                    <div class="leaderboard-row">
+                        <span class="rank">{{ loop.index }}</span>
+                        <span class="name">{{ student.name }}</span>
+                        <span class="wins">{{ student.total_wins }}</span>
+                        <span class="games">{{ student.total_games }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Total Games Leaderboard -->
+            <div class="leaderboard-section">
+                <h2>🎮 Most Active</h2>
+                <div class="leaderboard-table">
+                    <div class="leaderboard-header">
+                        <span>Rank</span>
+                        <span>Name</span>
+                        <span>Games</span>
+                        <span>Wins</span>
+                    </div>
+                    {% for student in students_by_games %}
+                    <div class="leaderboard-row">
+                        <span class="rank">{{ loop.index }}</span>
+                        <span class="name">{{ student.name }}</span>
+                        <span class="games">{{ student.total_games }}</span>
+                        <span class="wins">{{ student.total_wins }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

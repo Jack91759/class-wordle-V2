@@ -1,0 +1,294 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Game - Classroom Wordle</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <nav class="nav-bar">
+            <a href="{{ url_for('home') }}" class="nav-link">← Back to Menu</a>
+            <span class="student-info">Welcome, {{ student.name }}!</span>
+            <a href="{{ url_for('student_logout') }}" class="nav-link">Logout</a>
+        </nav>
+
+        <h1>🎒 Wordle Game</h1>
+
+        {% if no_word %}
+        <div class="message">Waiting for teacher to set a word...</div>
+        {% else %}
+
+        <div id="gameBoard" class="game-board">
+            <!-- 6 rows of 5 tiles each -->
+            <div class="row" data-row="0">
+                <div class="tile" data-col="0"></div>
+                <div class="tile" data-col="1"></div>
+                <div class="tile" data-col="2"></div>
+                <div class="tile" data-col="3"></div>
+                <div class="tile" data-col="4"></div>
+            </div>
+            <div class="row" data-row="1">
+                <div class="tile" data-col="0"></div>
+                <div class="tile" data-col="1"></div>
+                <div class="tile" data-col="2"></div>
+                <div class="tile" data-col="3"></div>
+                <div class="tile" data-col="4"></div>
+            </div>
+            <div class="row" data-row="2">
+                <div class="tile" data-col="0"></div>
+                <div class="tile" data-col="1"></div>
+                <div class="tile" data-col="2"></div>
+                <div class="tile" data-col="3"></div>
+                <div class="tile" data-col="4"></div>
+            </div>
+            <div class="row" data-row="3">
+                <div class="tile" data-col="0"></div>
+                <div class="tile" data-col="1"></div>
+                <div class="tile" data-col="2"></div>
+                <div class="tile" data-col="3"></div>
+                <div class="tile" data-col="4"></div>
+            </div>
+            <div class="row" data-row="4">
+                <div class="tile" data-col="0"></div>
+                <div class="tile" data-col="1"></div>
+                <div class="tile" data-col="2"></div>
+                <div class="tile" data-col="3"></div>
+                <div class="tile" data-col="4"></div>
+            </div>
+            <div class="row" data-row="5">
+                <div class="tile" data-col="0"></div>
+                <div class="tile" data-col="1"></div>
+                <div class="tile" data-col="2"></div>
+                <div class="tile" data-col="3"></div>
+                <div class="tile" data-col="4"></div>
+            </div>
+        </div>
+
+        <div class="input-section">
+            <input type="text" id="guessInput" placeholder="Enter your guess" maxlength="5">
+            <button onclick="makeGuess()" id="submitBtn" class="submit-btn">Submit Guess</button>
+        </div>
+
+        <div id="message" class="message"></div>
+        <div id="gameResult" class="game-result"></div>
+
+        <!-- Stats Popup Modal -->
+        <div id="statsModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2>🎉 Game Complete!</h2>
+                <div id="gameOutcome"></div>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-number" id="totalGames">0</div>
+                        <div class="stat-label">Games Played</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="winRate">0%</div>
+                        <div class="stat-label">Win Rate</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="currentStreak">0</div>
+                        <div class="stat-label">Current Streak</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="totalWins">0</div>
+                        <div class="stat-label">Total Wins</div>
+                    </div>
+                </div>
+                <button onclick="newGame()" class="new-game-btn">Play Again</button>
+            </div>
+        </div>
+
+        {% endif %}
+    </div>
+
+    <script>
+        let currentRow = 0;
+        let gameOver = false;
+
+        async function loadGameState() {
+            try {
+                const response = await fetch('/get_game_state');
+                const data = await response.json();
+
+                if (data.error) {
+                    window.location.href = '/student/login';
+                    return;
+                }
+
+                if (!data.has_word) {
+                    document.getElementById('message').textContent = 'Waiting for teacher to set a word...';
+                    document.getElementById('message').className = 'message';
+                    document.getElementById('submitBtn').disabled = true;
+                    return;
+                }
+
+                // Restore previous guesses
+                data.guesses.forEach((guess, rowIndex) => {
+                    const row = document.querySelector(`[data-row="${rowIndex}"]`);
+                    guess.word.split('').forEach((letter, colIndex) => {
+                        const tile = row.querySelector(`[data-col="${colIndex}"]`);
+                        tile.textContent = letter;
+                        tile.className = `tile ${guess.result[colIndex]}`;
+                    });
+                });
+
+                currentRow = data.guesses.length;
+                gameOver = data.game_over;
+
+                if (data.game_over) {
+                    document.getElementById('submitBtn').disabled = true;
+                    document.getElementById('guessInput').disabled = true;
+
+                    if (data.won) {
+                        document.getElementById('gameResult').innerHTML = '<h3 style="color: #6aaa64;">🎉 Congratulations! You won!</h3>';
+                    } else {
+                        document.getElementById('gameResult').innerHTML = '<h3 style="color: #787c7e;">😔 Game Over! Better luck next time!</h3>';
+                    }
+                }
+
+            } catch (error) {
+                console.error('Error loading game state:', error);
+            }
+        }
+
+        async function makeGuess() {
+            if (gameOver) return;
+
+            const guess = document.getElementById('guessInput').value.toUpperCase();
+            const messageDiv = document.getElementById('message');
+
+            if (guess.length !== 5) {
+                messageDiv.textContent = 'Please enter exactly 5 letters';
+                messageDiv.className = 'message error';
+                return;
+            }
+
+            try {
+                const response = await fetch('/make_guess', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ guess: guess })
+                });
+
+                const data = await response.json();
+
+                if (!data.success) {
+                    messageDiv.textContent = data.message;
+                    messageDiv.className = 'message error';
+                    return;
+                }
+
+                // Update the game board
+                const row = document.querySelector(`[data-row="${currentRow}"]`);
+                guess.split('').forEach((letter, index) => {
+                    const tile = row.querySelector(`[data-col="${index}"]`);
+                    tile.textContent = letter;
+                    setTimeout(() => {
+                        tile.className = `tile ${data.result[index]}`;
+                    }, index * 100);
+                });
+
+                currentRow++;
+                document.getElementById('guessInput').value = '';
+                messageDiv.textContent = '';
+
+                if (data.game_over) {
+                    gameOver = true;
+                    document.getElementById('submitBtn').disabled = true;
+                    document.getElementById('guessInput').disabled = true;
+
+                    setTimeout(() => {
+                        showStatsModal(data);
+                    }, 1000);
+                }
+
+            } catch (error) {
+                messageDiv.textContent = 'Error making guess';
+                messageDiv.className = 'message error';
+            }
+        }
+
+        function showStatsModal(gameData) {
+            const modal = document.getElementById('statsModal');
+            const outcomeDiv = document.getElementById('gameOutcome');
+
+            if (gameData.won) {
+                outcomeDiv.innerHTML = `
+                    <div class="outcome-message win">
+                        <h3>🎉 Congratulations!</h3>
+                        <p>You solved it in ${gameData.guess_count}/6 guesses!</p>
+                    </div>
+                `;
+            } else {
+                outcomeDiv.innerHTML = `
+                    <div class="outcome-message lose">
+                        <h3>😔 Better luck next time!</h3>
+                        <p>The word was: <strong>${gameData.target_word}</strong></p>
+                    </div>
+                `;
+            }
+
+            // Update stats
+            document.getElementById('totalGames').textContent = gameData.stats.total_games;
+            document.getElementById('winRate').textContent = gameData.stats.win_rate + '%';
+            document.getElementById('currentStreak').textContent = gameData.stats.current_streak;
+            document.getElementById('totalWins').textContent = gameData.stats.total_wins;
+
+            modal.style.display = 'block';
+        }
+
+        async function newGame() {
+            try {
+                const response = await fetch('/new_game', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+
+                if (response.ok) {
+                    location.reload();
+                }
+            } catch (error) {
+                console.error('Error starting new game:', error);
+            }
+        }
+
+        // Modal close functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const modal = document.getElementById('statsModal');
+            const span = document.getElementsByClassName('close')[0];
+
+            span.onclick = function() {
+                modal.style.display = 'none';
+            }
+
+            window.onclick = function(event) {
+                if (event.target == modal) {
+                    modal.style.display = 'none';
+                }
+            }
+        });
+
+        document.getElementById('guessInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                makeGuess();
+            }
+        });
+
+        document.getElementById('guessInput').addEventListener('input', function(e) {
+            e.target.value = e.target.value.toUpperCase();
+        });
+
+        // Load game state on page load
+        loadGameState();
+    </script>
+</body>
+</html>

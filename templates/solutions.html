@@ -1,0 +1,117 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solutions for {{ word }} - Classroom Wordle</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <nav class="nav-bar">
+            <a href="javascript:history.back()" class="nav-link">← Back</a>
+        </nav>
+
+        <h1>🧠 Solutions for "{{ word }}"</h1>
+        <p class="solutions-subtitle">See how others solved this {{ game_type.title() }} Wordle!</p>
+
+        {% if recommended %}
+        <div class="recommended-solution">
+            <h2>⭐ Recommended Solution</h2>
+            <div class="solution-card featured">
+                <div class="solution-header">
+                    <div class="solver-info">
+                        <strong>{{ recommended.student.name }}</strong>
+                        <span class="solution-stats">{{ recommended.guess_count }} guesses</span>
+                    </div>
+                    <div class="solution-result">
+                        {% if recommended.won %}
+                            <span class="won">✅ Won</span>
+                        {% else %}
+                            <span class="lost">❌ Lost</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="solution-path">
+                    {% for guess in recommended.solution_list %}
+                    <div class="guess-word">{{ guess }}</div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="all-solutions">
+            <h2>📊 All Solutions ({{ solutions|length }})</h2>
+
+            {% if solutions %}
+            <div class="solutions-stats">
+                <div class="stats-summary">
+                    <div class="stat-item">
+                        <div class="stat-number">{{ total_wins }}</div>
+                        <div class="stat-label">Successful Solves</div>
+                    </div>
+
+                    <div class="stat-item">
+                        <div class="stat-number">
+                            {% if total_solutions > 0 %}
+                                {{ "%.1f"|format((total_wins / total_solutions) * 100) }}%
+                            {% else %}
+                                0%
+                            {% endif %}
+                        </div>
+                        <div class="stat-label">Success Rate</div>
+                    </div>
+
+                    <div class="stat-item">
+                        <div class="stat-number">
+                            {% if total_wins > 0 %}
+                                {{ "%.1f"|format(
+                                    (solutions | selectattr('won') | map(attribute='guess_count') | sum) / total_wins
+                                ) }}
+                            {% else %}
+                                0
+                            {% endif %}
+                        </div>
+                        <div class="stat-label">Avg Guesses</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="solutions-grid">
+                {% for solution in solutions %}
+                <div class="solution-card {% if solution.won %}won{% else %}lost{% endif %}">
+                    <div class="solution-header">
+                        <div class="solver-info">
+                            <strong>{{ solution.student.name }}</strong>
+                            <span class="solution-stats">{{ solution.guess_count }} guesses</span>
+                        </div>
+                        <div class="solution-result">
+                            {% if solution.won %}
+                                <span class="won">✅ Won</span>
+                            {% else %}
+                                <span class="lost">❌ Lost</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="solution-path">
+                        {% for guess in solution.solution_list %}
+                        <div class="guess-word">{{ guess }}</div>
+                        {% endfor %}
+                    </div>
+                    <div class="solution-time">
+                        {{ solution.created_at.strftime('%m/%d %H:%M') }}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="no-solutions">
+                <p>No solutions available yet for this word.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>

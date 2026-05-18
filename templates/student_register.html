@@ -1,0 +1,43 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Registration - Classroom Wordle</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <nav class="nav-bar">
+            <a href="{{ url_for('home') }}" class="nav-link">← Back to Menu</a>
+        </nav>
+
+        <h1>🎒 Student Registration</h1>
+
+        <div class="login-panel">
+            <form method="POST" class="login-form">
+                <h3>Create Your Account</h3>
+                <input type="text" name="name" placeholder="Your Full Name" required>
+                <input type="text" name="username" placeholder="Choose Username" required>
+                <input type="password" name="password" placeholder="Choose Password" required minlength="4">
+                <button type="submit" class="login-btn">Create Account</button>
+            </form>
+
+            <p style="text-align: center; margin-top: 20px;">
+                <a href="{{ url_for('student_login') }}" style="color: #c9b458;">Already have an account? Login here</a>
+            </p>
+
+            {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    <div class="flash-messages">
+                        {% for message in messages %}
+                            <div class="message error">{{ message }}</div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+        </div>
+    </div>
+</body>
+</html>

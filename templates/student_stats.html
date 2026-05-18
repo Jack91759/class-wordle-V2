@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ page_title }} - Classroom Wordle</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <nav class="nav-bar">
+            <a href="{{ url_for('student_search') }}" class="nav-link">← Back to Search</a>
+            <a href="{{ url_for('home') }}" class="nav-link">Home</a>
+        </nav>
+
+        <h1>{{ page_title }}</h1>
+
+        <div class="stats-overview">
+            <div class="stats-cards">
+                <div class="stat-card">
+                    <div class="stat-number">{{ student.total_games }}</div>
+                    <div class="stat-label">Total Games</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">{{ student.total_wins }}</div>
+                    <div class="stat-label">Games Won</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">{{ ((student.total_wins / student.total_games * 100) | round(1)) if student.total_games > 0 else 0 }}%</div>
+                    <div class="stat-label">Win Rate</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">{{ games|length }}</div>
+                    <div class="stat-label">{{ 'Infinite' if game_type == 'infinite' else 'Custom' }} Games</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">{{ current_streak }}</div>
+                    <div class="stat-label">Current Win Streak</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">{{ avg_guesses if avg_guesses > 0 else 'N/A' }}</div>
+                    <div class="stat-label">Avg Guesses (Wins)</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="game-type-toggle">
+            <a href="{{ url_for('view_student_stats', student_id=student.id, game_type='custom') }}"
+               class="toggle-btn {{ 'active' if game_type == 'custom' else '' }}">📚 Custom Games</a>
+            <a href="{{ url_for('view_student_stats', student_id=student.id, game_type='infinite') }}"
+               class="toggle-btn {{ 'active' if game_type == 'infinite' else '' }}">🔄 Infinite Games</a>
+            <a href="{{ url_for('view_student_stats', student_id=student.id, game_type='daily') }}"
+               class="toggle-btn {{ 'active' if game_type == 'daily' else '' }}">📅 Daily Games</a>
+        </div>
+
+        {% if games %}
+        <div class="detailed-stats">
+            <h3>Game History ({{ game_type.title() }} Mode)</h3>
+            <div class="games-table">
+                <div class="games-header">
+                    <span>Date</span>
+                    <span>Word</span>
+                    <span>Result</span>
+                    <span>Guesses</span>
+                </div>
+                {% for game in games[:20] %}
+                <div class="game-row">
+                    <span class="game-date">
+                        {% if game_type == 'daily' %}
+                            {{ game.date.strftime('%m/%d/%Y') if game.date else 'Unknown' }}
+                        {% else %}
+                            {{ game.completed_at.strftime('%m/%d/%Y %H:%M') if game.completed_at else 'In Progress' }}
+                        {% endif %}
+                    </span>
+                    <span class="game-word">{{ game.target_word }}</span>
+                    <span class="game-result {{ 'won' if game.won else 'lost' }}">
+                        {{ '✅ Won' if game.won else '❌ Lost' }}
+                    </span>
+                    <span class="game-guesses">{{ game.guess_count }}/6</span>
+                </div>
+                {% endfor %}
+            </div>
+
+            {% if games|length > 20 %}
+            <p class="showing-note">Showing latest 20 games of {{ games|length }} total</p>
+            {% endif %}
+        </div>
+        {% else %}
+        <div class="no-games">
+            <p>No {{ game_type }} games found for this student.</p>
+        </div>
+        {% endif %}
+    </div>
+</body>
+</html>
