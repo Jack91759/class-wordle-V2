@@ -371,6 +371,10 @@ Created by Hack37 Studios
 
 https://hack37studios.pythonanywhere.com/
 
-Project Repository:
+v1 Project Repository:
 
 https://github.com/Jack91759/class-wordle
+
+v2 Project Repository:
+
+https://github.com/Jack91759/class-wordle-V2
